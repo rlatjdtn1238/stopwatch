@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="스톱워치">
+<meta name="theme-color" content="#141716">
+<title>집중 스톱워치</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23141716'/%3E%3Ccircle cx='90' cy='98' r='52' fill='none' stroke='%237cc4b2' stroke-width='10'/%3E%3Crect x='80' y='30' width='20' height='16' rx='4' fill='%237cc4b2'/%3E%3Cpath d='M90 98 L90 64' stroke='%23e6eae8' stroke-width='9' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@300;400&family=Gothic+A1:wght@400;600;800&display=swap">
+<style>
+:root{
+  --bg:#141716; --surface:#1d2120; --surface-2:#252a28; --ink:#e6eae8; --muted:#8a9490; --faint:#5b6461;
+  --accent:#7cc4b2; --accent-ink:#0f1513; --line:#2e3532; --warn:#e3907b;
+  --f-num:"Chivo Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --f-body:"Gothic A1", -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);-webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(16px,env(safe-area-inset-left,0px));box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.app{min-height:100%;display:flex;flex-direction:column;gap:18px;padding-block:14px 28px;max-width:640px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between}
+.date{font-family:var(--f-num);font-size:13px;color:var(--muted);letter-spacing:.04em}
+.link-btn{background:none;border:0;color:var(--muted);font:600 13px var(--f-body);padding:6px 0;cursor:pointer}
+.label{font-size:12px;letter-spacing:.06em;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 14px;font:600 15px var(--f-body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip.add{color:var(--muted);border-style:dashed;background:transparent}
+.chip.small{padding:6px 11px;font-size:13px;font-weight:400;color:var(--muted)}
+.input{width:100%;border:0;border-bottom:1.5px solid var(--line);background:transparent;color:var(--ink);font:400 17px var(--f-body);padding:8px 0;border-radius:0;outline:none}
+.input:focus{border-bottom-color:var(--accent)}
+.pick{display:flex;flex-direction:column;gap:12px}
+.now{display:flex;flex-direction:column;gap:4px;text-align:center}
+.now .cat{font:800 clamp(24px,7vw,34px)/1.2 var(--f-body)}
+.now .sub{font-size:16px;color:var(--muted);min-height:20px}
+.clock-area{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;min-height:30vh}
+.clock{font-family:var(--f-num);font-weight:300;font-variant-numeric:tabular-nums;line-height:1;font-size:clamp(64px,21vw,160px);letter-spacing:-.04em;white-space:nowrap}
+.clock .sec{color:var(--faint)}
+.state{font-size:13px;color:var(--muted);min-height:18px}
+.state.running{color:var(--accent);font-weight:600}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{appearance:none;border:0;border-radius:14px;padding:18px 10px;font:700 17px var(--f-body);cursor:pointer;text-align:center;text-decoration:none;display:block}
+.btn.sm{padding:13px 10px;font-size:15px}
+.btn:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);color:var(--accent-ink)}
+.ghost{background:var(--surface-2);color:var(--ink)}
+.danger{background:transparent;color:var(--warn);border:1px solid var(--line)}
+.full{grid-column:1/-1}
+.sheet{background:var(--surface);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.preview{font-size:16px;line-height:1.5;color:var(--ink)}
+.hint{font-size:12.5px;line-height:1.55;color:var(--muted);margin:0}
+.err{font-size:13px;color:var(--warn)}
+.note{border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+.note-head{display:flex;justify-content:space-between;align-items:center}
+.entry{all:unset;font-size:15px;line-height:1.5;color:var(--ink);padding:4px 0;cursor:pointer}
+.entry:focus-visible{outline:2px solid var(--accent)}
+.box{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px 16px;font-family:var(--f-num);font-size:14px;line-height:1.7;color:var(--ink);margin-top:6px}
+.empty{font-size:14px;color:var(--faint)}
+.dirty{font-size:12.5px;color:var(--warn)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field input,.field textarea,.field select{border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:400 16px var(--f-body);padding:10px 12px;width:100%}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (prefers-reduced-motion: no-preference){.state.running::before{content:"● ";animation:blink 1.6s infinite}}
+@keyframes blink{50%{opacity:.25}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="date" id="today"></span>
+    <button class="link-btn" id="gearBtn" type="button">설정</button>
+  </div>
+
+  <div class="sheet" id="settings" hidden>
+    <div class="field"><label class="label" for="cats">대주제 (쉼표로 구분)</label><textarea id="cats" rows="2"></textarea></div>
+    <div class="field"><label class="label" for="scName">단축어 이름</label><input id="scName" autocomplete="off"></div>
+    <button class="btn ghost sm" id="closeSettings" type="button">저장하고 닫기</button>
+  </div>
+
+  <div class="pick" id="pick">
+    <span class="label">대주제</span>
+    <div class="chips" id="catChips"></div>
+    <div id="addCatRow" hidden><input class="input" id="newCat" placeholder="새 대주제 이름" maxlength="30" autocomplete="off" enterkeyhint="done"></div>
+    <span class="label">세부 내용 (선택)</span>
+    <input class="input" id="sub" placeholder="하농" maxlength="40" autocomplete="off">
+    <div class="chips" id="subChips"></div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="now" id="now" hidden>
+    <div class="cat" id="nowCat"></div>
+    <div class="sub" id="nowSub"></div>
+  </div>
+
+  <div class="clock-area">
+    <div class="clock" id="clock">00:00<span class="sec">:00</span></div>
+    <div class="state" id="state">준비</div>
+  </div>
+
+  <div class="sheet" id="saveSheet" hidden>
+    <span class="label">이렇게 기록돼요</span>
+    <div class="preview" id="preview"></div>
+    <div class="controls">
+      <button class="btn primary full" id="saveBtn" type="button">옵시디언에 저장</button>
+      <button class="btn ghost sm" id="resumeBtn" type="button">이어서 하기</button>
+      <button class="btn danger sm" id="discardBtn" type="button">버리기</button>
+    </div>
+  </div>
+
+  <div class="controls" id="mainControls">
+    <button class="btn primary full" id="startBtn" type="button">시작</button>
+    <button class="btn ghost" id="pauseBtn" type="button" hidden>일시정지</button>
+    <button class="btn primary" id="stopBtn" type="button" hidden>멈추고 저장</button>
+  </div>
+
+  <div class="sheet" id="editSheet" hidden>
+    <span class="label">기록 고치기</span>
+    <div class="field"><label class="label" for="eCat">대주제</label><select id="eCat"></select></div>
+    <div class="field"><label class="label" for="eSub">세부 내용</label><input id="eSub" autocomplete="off"></div>
+    <div class="row2">
+      <div class="field"><label class="label" for="eStart">시작 시간</label><input id="eStart" type="time"></div>
+      <div class="field"><label class="label" for="eMin">작업 시간 (분)</label><input id="eMin" type="number" min="0" step="1" inputmode="numeric"></div>
+    </div>
+    <div class="err" id="eErr"></div>
+    <div class="controls">
+      <button class="btn primary sm" id="eSave" type="button">고치기</button>
+      <button class="btn ghost sm" id="eCancel" type="button">취소</button>
+      <button class="btn danger sm full" id="eDelete" type="button">이 기록 지우기</button>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-head"><span class="label" id="noteLabel">오늘 기록</span><button class="link-btn" id="resyncBtn" type="button" hidden>옵시디언에 다시 저장</button></div>
+    <div class="dirty" id="dirtyMsg" hidden>고친 내용은 "옵시디언에 다시 저장"을 눌러야 파일에 반영돼요.</div>
+    <div id="entries"></div>
+    <div class="box" id="sumBox" hidden></div>
+    <p class="hint" id="noteHint">기록을 누르면 고치거나 지울 수 있어요.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const KEY='focus-stopwatch-v3';
+  const store={get(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}},set(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}};
+  let S=Object.assign({cats:['운동','피아노','롤'],subs:{},shortcut:'스톱워치 기록',
+    mode:'idle',cat:'',sub:'',startedAt:0,accum:0,runFrom:0,pending:null,log:[],dirty:{}},store.get());
+  const save=()=>store.set(S);
+  function pad(n){return String(n).padStart(2,'0')}
+  function ymd(d){return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}`}
+  const hm=d=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const elapsed=()=>S.accum+(S.mode==='running'?Date.now()-S.runFrom:0);
+  const mins=ms=>Math.max(0,Math.round(ms/60000));
+  function dur(m){const h=Math.floor(m/60),r=m%60;return h?(r?`${h}h ${r}m`:`${h}h`):`${r}m`}
+  const entryText=p=>`${p.start} - ${p.cat}${p.sub?` (${p.sub})`:''} → ${dur(mins(p.ms))}`;
+  const dayList=date=>S.log.filter(l=>l.date===date).sort((a,b)=>a.start.localeCompare(b.start));
+  function totals(list){
+    const t={};list.forEach(l=>t[l.cat]=(t[l.cat]||0)+mins(l.ms));
+    return Object.entries(t).sort((a,b)=>b[1]-a[1]);
+  }
+  function fileContent(date){
+    const list=dayList(date);
+    const lines=list.map(entryText).join('\n\n');
+    const box=totals(list).map(([k,v])=>`${k} - ${dur(v)}`).join('\n');
+    return `${lines}\n\n\`\`\`\n${box}\n\`\`\`\n`;
+  }
+  function sendToObsidian(date){
+    const text=date+'@@@'+fileContent(date);
+    const url='shortcuts://run-shortcut?name='+encodeURIComponent(S.shortcut)+'&input=text&text='+encodeURIComponent(text);
+    delete S.dirty[date];save();
+    window.location.href=url;
+  }
+
+  function renderClock(){
+    const t=Math.floor(elapsed()/1000),h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;
+    $('clock').innerHTML=`${h?`${h}:${pad(m)}`:`00:${pad(m)}`}<span class="sec">:${pad(s)}</span>`;
+  }
+  function chip(text,pressed,cls,onClick){
+    const b=document.createElement('button');b.type='button';b.className='chip'+(cls?' '+cls:'');b.textContent=text;
+    if(pressed!==null)b.setAttribute('aria-pressed',pressed?'true':'false');b.onclick=onClick;return b;
+  }
+  function renderPick(){
+    const c=$('catChips');c.innerHTML='';
+    S.cats.forEach(name=>c.append(chip(name,S.cat===name,'',()=>{S.cat=S.cat===name?'':name;$('err').textContent='';save();renderPick()})));
+    c.append(chip('+ 추가',null,'add',()=>{$('addCatRow').hidden=false;$('newCat').focus()}));
+    const sc=$('subChips');sc.innerHTML='';
+    ((S.cat&&S.subs[S.cat])||[]).slice(0,6).forEach(s=>sc.append(chip(s,null,'small',()=>{$('sub').value=s})));
+  }
+  let viewDate=ymd(new Date());
+  function renderNote(){
+    const list=dayList(viewDate);
+    $('noteLabel').textContent=viewDate===ymd(new Date())?'오늘 기록':viewDate+' 기록';
+    const e=$('entries');e.innerHTML='';
+    if(!list.length){const p=document.createElement('div');p.className='empty';p.textContent='첫 기록을 저장하면 여기에 오늘 노트가 쌓여요.';e.append(p)}
+    list.forEach(l=>{const b=document.createElement('button');b.type='button';b.className='entry';b.textContent=entryText(l);b.onclick=()=>openEdit(l.id);e.append(b)});
+    const rows=totals(list);
+    $('sumBox').hidden=!rows.length;$('sumBox').innerHTML='';
+    rows.forEach(([k,v])=>{const d=document.createElement('div');d.textContent=`${k} - ${dur(v)}`;$('sumBox').append(d)});
+    $('noteHint').hidden=!list.length;
+    const dirty=!!S.dirty[viewDate];
+    $('dirtyMsg').hidden=!dirty;$('resyncBtn').hidden=!dirty;
+  }
+  function render(){
+    $('today').textContent=ymd(new Date());
+    const m=S.mode;
+    $('pick').hidden=m!=='idle';
+    $('now').hidden=m==='idle';
+    $('nowCat').textContent=S.cat;$('nowSub').textContent=S.sub;
+    $('startBtn').hidden=!(m==='idle'||m==='paused');
+    $('startBtn').textContent=m==='paused'?'다시 시작':'시작';
+    $('startBtn').classList.toggle('full',m==='idle');
+    $('pauseBtn').hidden=m!=='running';
+    $('stopBtn').hidden=!(m==='running'||m==='paused');
+    $('mainControls').hidden=m==='review';
+    $('saveSheet').hidden=m!=='review';
+    $('state').className='state'+(m==='running'?' running':'');
+    $('state').textContent={idle:'준비',running:'집중하는 중',paused:'일시정지',review:'멈춤'}[m];
+    if(m==='review'&&S.pending)$('preview').textContent=entryText(S.pending);
+    if(m==='idle')renderPick();
+    renderNote();renderClock();
+  }
+
+  let wake=null;
+  async function keepAwake(on){try{
+    if(on&&'wakeLock' in navigator&&!wake){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>wake=null)}
+    if(!on&&wake){await wake.release();wake=null}}catch(e){}}
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(S.mode==='running')keepAwake(true);viewDate=ymd(new Date());render()}});
+
+  $('newCat').addEventListener('keydown',e=>{
+    if(e.key!=='Enter')return;const v=e.target.value.trim();
+    if(v&&!S.cats.includes(v))S.cats.push(v);
+    if(v)S.cat=v;e.target.value='';$('addCatRow').hidden=true;save();renderPick();
+  });
+  $('newCat').addEventListener('blur',()=>{if(!$('newCat').value.trim())$('addCatRow').hidden=true});
+
+  $('startBtn').onclick=()=>{
+    if(S.mode==='idle'){
+      if(!S.cat){$('err').textContent='대주제를 먼저 골라주세요.';return}
+      S.sub=$('sub').value.trim();S.startedAt=Date.now();S.accum=0;
+    }
+    S.mode='running';S.runFrom=Date.now();save();keepAwake(true);render();
+  };
+  $('pauseBtn').onclick=()=>{S.accum=elapsed();S.mode='paused';save();keepAwake(false);render()};
+  $('stopBtn').onclick=()=>{
+    const ms=elapsed(),st=new Date(S.startedAt);
+    S.accum=ms;S.mode='review';
+    S.pending={id:Date.now().toString(36),date:ymd(st),start:hm(st),cat:S.cat,sub:S.sub,ms};
+    save();keepAwake(false);render();
+  };
+  function reset(){S.pending=null;S.mode='idle';S.sub='';S.accum=0;$('sub').value='';}
+  $('saveBtn').onclick=()=>{
+    const p=S.pending;if(!p)return;
+    S.log.push(p);S.log=S.log.slice(-500);
+    if(p.sub){const a=(S.subs[p.cat]||[]).filter(x=>x!==p.sub);a.unshift(p.sub);S.subs[p.cat]=a.slice(0,10)}
+    reset();viewDate=p.date;save();render();
+    sendToObsidian(p.date);
+  };
+  $('resumeBtn').onclick=()=>{S.pending=null;S.mode='paused';save();render()};
+  $('discardBtn').onclick=()=>{
+    const b=$('discardBtn');
+    if(b.dataset.armed){delete b.dataset.armed;b.textContent='버리기';reset();save();render();return}
+    b.dataset.armed='1';b.textContent='정말 버리기';
+    setTimeout(()=>{delete b.dataset.armed;b.textContent='버리기'},3000);
+  };
+  $('resyncBtn').onclick=()=>sendToObsidian(viewDate);
+
+  let editId=null;
+  function openEdit(id){
+    const l=S.log.find(x=>x.id===id);if(!l)return;editId=id;
+    const sel=$('eCat');sel.innerHTML='';
+    const opts=S.cats.includes(l.cat)?S.cats:[l.cat,...S.cats];
+    opts.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.append(o)});
+    sel.value=l.cat;$('eSub').value=l.sub||'';$('eStart').value=l.start;$('eMin').value=mins(l.ms);$('eErr').textContent='';
+    const d=$('eDelete');delete d.dataset.armed;d.textContent='이 기록 지우기';
+    $('editSheet').hidden=false;$('editSheet').scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  $('eCancel').onclick=()=>{$('editSheet').hidden=true;editId=null};
+  $('eSave').onclick=()=>{
+    const l=S.log.find(x=>x.id===editId);if(!l)return;
+    const st=$('eStart').value,mn=parseInt($('eMin').value,10);
+    if(!/^\d\d:\d\d$/.test(st)){$('eErr').textContent='시작 시간을 입력해 주세요.';return}
+    if(!(mn>=0)){$('eErr').textContent='작업 시간을 분 단위 숫자로 입력해 주세요.';return}
+    l.cat=$('eCat').value;l.sub=$('eSub').value.trim();l.start=st;l.ms=mn*60000;
+    S.dirty[l.date]=true;save();$('editSheet').hidden=true;render();
+  };
+  $('eDelete').onclick=()=>{
+    const d=$('eDelete');
+    if(!d.dataset.armed){d.dataset.armed='1';d.textContent='한 번 더 누르면 지워져요';return}
+    const l=S.log.find(x=>x.id===editId);
+    if(l){S.log=S.log.filter(x=>x.id!==editId);S.dirty[l.date]=true}
+    save();$('editSheet').hidden=true;render();
+  };
+
+  $('gearBtn').onclick=()=>{$('cats').value=S.cats.join(', ');$('scName').value=S.shortcut;$('settings').hidden=false};
+  $('closeSettings').onclick=()=>{
+    S.cats=$('cats').value.split(',').map(s=>s.trim()).filter(Boolean);
+    S.shortcut=$('scName').value.trim()||'스톱워치 기록';
+    if(!S.cats.includes(S.cat))S.cat='';
+    save();$('settings').hidden=true;render();
+  };
+
+  render();
+  if(S.mode==='running')keepAwake(true);
+  setInterval(()=>{if(S.mode==='running')renderClock();$('today').textContent=ymd(new Date())},250);
+})();
+</script>
+</body>
+</html>
